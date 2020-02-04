@@ -62,11 +62,14 @@
 		lastClick.x = pointer.x;
 		lastClick.y = pointer.y;
 	}
-
+	function foodCollideProcess(playerGo, foodGO)
+	{
+		return true;
+	}
 	function foodCollide(playerGO, foodGO)
 	{
 		mass++;
-		playerGO.setScale(1 + mass * .1);
+		playerGO.setScale(1 + mass * .04);
 		foodGO.destroy();
 	}
 
@@ -89,7 +92,7 @@
 
 
 		this.input.on('pointermove', move);
-		timer.scene.time.addEvent({delay: 1500, loop: true, callback: addFood, args: [this] });
+		timer.scene.time.addEvent({delay: 500, loop: true, callback: addFood, args: [this] });
 	}
 
 
@@ -99,7 +102,7 @@
 		{
 			move(lastClick);
 		}
-		this.physics.collide(player, food, foodCollide);
+		this.physics.collide(player, food, foodCollide, foodCollideProcess);
 
 	}
 	</script>
