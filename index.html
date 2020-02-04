@@ -46,6 +46,7 @@
 	var timer;
 	var width;
 	var height;
+	var food = [];
 
 
 	function clamp(num, min, max) {
@@ -54,17 +55,24 @@
 
 	function move(pointer)
 	{
-		var velocityX = clamp((pointer.x - player.x) * 3, -maxSpeed, maxSpeed);
-		var velocityY = clamp((pointer.y - player.y) * 3, -maxSpeed, maxSpeed);
+		var velocityX = clamp((pointer.x - player.x) * 3 / (mass * .2), -maxSpeed, maxSpeed);
+		var velocityY = clamp((pointer.y - player.y) * 3 / (mass * .2), -maxSpeed, maxSpeed);
 		player.setVelocityX(velocityX);
 		player.setVelocityY(velocityY);
 		lastClick.x = pointer.x;
 		lastClick.y = pointer.y;
 	}
 
+	function foodCollide(playerGO, foodGO)
+	{
+		mass++;
+		playerGO.setScale(1 + mass * .1);
+		foodGO.destroy();
+	}
+
 	function addFood(scene)
 	{
-		scene.physics.add.sprite(Math.random() * width, Math.random() * height, "food" + Math.floor(Math.random() * 4 + 1))
+		food.push(scene.physics.add.sprite(Math.random() * width, Math.random() * height, "food" + Math.floor(Math.random() * 4 + 1)));
 	}
 
 	function create ()
@@ -78,6 +86,8 @@
 		lastClick = new Phaser.Geom.Point(width / 2, height / 2);
 		this.add.image(width / 2, height / 2, 'background');
 		player = this.physics.add.sprite(width / 2, height / 2, 'player');
+
+
 		this.input.on('pointermove', move);
 		timer.scene.time.addEvent({delay: 1500, loop: true, callback: addFood, args: [this] });
 	}
@@ -89,6 +99,7 @@
 		{
 			move(lastClick);
 		}
+		this.physics.collide(player, food, foodCollide);
 
 	}
 	</script>
