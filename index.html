@@ -6,6 +6,7 @@
 	</head>
 	<body>
 	<script type="text/javascript">
+		
 		var config = {
 	    type: Phaser.AUTO,
 	    width: 800,
@@ -29,30 +30,58 @@
 	{
 	    this.load.image('background', 'assets/background.png');
 	    this.load.image('player', 'assets/player.png');
+	    this.load.image('food1', 'assets/food1.png');
+	    this.load.image('food2', 'assets/food2.png');
+	    this.load.image('food3', 'assets/food3.png');
+	    this.load.image('food4', 'assets/food4.png');
 	}
 
 	var game = new Phaser.Game(config);
-	var lastClick = new Phaser.Geom.Point(400, 300);
+	var lastClick;
 	var mass;
+	var maxSpeed;
 	var cursor;
 	var player;
+	var score;
+	var timer;
+	var width;
+	var height;
 
-	function create ()
-	{
-		this.add.image(400, 300, 'background');
-		player = this.physics.add.sprite(400, 300, 'player');
-		player.setInteractive();
-		player.on('pointerdown', stop)
-		this.input.on('pointermove', move)
+
+	function clamp(num, min, max) {
+	  return num <= min ? min : num >= max ? max : num;
 	}
 
 	function move(pointer)
 	{
-		player.setVelocityX(pointer.x - player.x);
-		player.setVelocityY(pointer.y - player.y);
+		var velocityX = clamp((pointer.x - player.x) * 3, -maxSpeed, maxSpeed);
+		var velocityY = clamp((pointer.y - player.y) * 3, -maxSpeed, maxSpeed);
+		player.setVelocityX(velocityX);
+		player.setVelocityY(velocityY);
 		lastClick.x = pointer.x;
 		lastClick.y = pointer.y;
 	}
+
+	function addFood(scene)
+	{
+		scene.physics.add.sprite(Math.random() * width, Math.random() * height, "food" + Math.floor(Math.random() * 4 + 1))
+	}
+
+	function create ()
+	{
+		width = game.config.width;
+		height = game.config.height;
+		mass = 1;
+		maxSpeed = 300;
+		score = 0;
+		timer = new Phaser.Time.Clock(this);
+		lastClick = new Phaser.Geom.Point(width / 2, height / 2);
+		this.add.image(width / 2, height / 2, 'background');
+		player = this.physics.add.sprite(width / 2, height / 2, 'player');
+		this.input.on('pointermove', move);
+		timer.scene.time.addEvent({delay: 1500, loop: true, callback: addFood, args: [this] });
+	}
+
 
 	function update ()
 	{
@@ -60,6 +89,7 @@
 		{
 			move(lastClick);
 		}
+
 	}
 	</script>
 	</body>
