@@ -55,22 +55,24 @@
 
 	function move(pointer)
 	{
-		var velocityX = clamp((pointer.x - player.x) * 3 / (mass * .2), -maxSpeed, maxSpeed);
-		var velocityY = clamp((pointer.y - player.y) * 3 / (mass * .2), -maxSpeed, maxSpeed);
+		var velocityX = clamp((pointer.x - player.x) * 3 / (mass * .1), -maxSpeed, maxSpeed);
+		var velocityY = clamp((pointer.y - player.y) * 3 / (mass * .1), -maxSpeed, maxSpeed);
 		player.setVelocityX(velocityX);
 		player.setVelocityY(velocityY);
 		lastClick.x = pointer.x;
 		lastClick.y = pointer.y;
 	}
-	function foodCollideProcess(playerGo, foodGO)
-	{
-		return true;
-	}
-	function foodCollide(playerGO, foodGO)
+	function foodCollideProcess(playerGO, foodGO)
 	{
 		mass++;
-		playerGO.setScale(1 + mass * .04);
+		player.setScale(.1 + mass * .01);
 		foodGO.destroy();
+		return true;
+	}
+
+	function foodCollide(playerGO, foodGO)
+	{
+
 	}
 
 	function addFood(scene)
@@ -89,6 +91,8 @@
 		lastClick = new Phaser.Geom.Point(width / 2, height / 2);
 		this.add.image(width / 2, height / 2, 'background');
 		player = this.physics.add.sprite(width / 2, height / 2, 'player');
+		player.smoothed = false;
+		player.setScale(.1 + mass * .01);
 
 
 		this.input.on('pointermove', move);
