@@ -9,8 +9,8 @@
 		
 		var config = {
 	    type: Phaser.AUTO,
-	    width: 800,
-	    height: 600,
+	    width: window.screen.width,
+	    height: window.screen.height,
 	    physics: {
             default: 'arcade',
             arcade: {
@@ -55,17 +55,17 @@
 
 	function move(pointer)
 	{
-		var velocityX = clamp((pointer.x - player.x) * 3 / (mass * .1), -maxSpeed, maxSpeed);
-		var velocityY = clamp((pointer.y - player.y) * 3 / (mass * .1), -maxSpeed, maxSpeed);
-		player.setVelocityX(velocityX);
-		player.setVelocityY(velocityY);
-		lastClick.x = pointer.x;
-		lastClick.y = pointer.y;
+		//var velocityX = clamp(, -maxSpeed, maxSpeed);
+		//var velocityY = clamp(, -maxSpeed, maxSpeed);
+		player.setVelocityX((pointer.worldX - player.x) * 3 / (mass * .1));
+		player.setVelocityY((pointer.worldY - player.y) * 3 / (mass * .1));
+		lastClick.x = pointer.worldX;
+		lastClick.y = pointer.worldY;
 	}
 	function foodCollideProcess(playerGO, foodGO)
 	{
 		mass++;
-		player.setScale(.1 + mass * .01);
+		player.setScale(.1 + mass * .005);
 		foodGO.destroy();
 		return true;
 	}
@@ -82,21 +82,30 @@
 
 	function create ()
 	{
-		width = game.config.width;
-		height = game.config.height;
+		width = 10000;
+		height = 10000;
 		mass = 1;
 		maxSpeed = 300;
 		score = 0;
 		timer = new Phaser.Time.Clock(this);
 		lastClick = new Phaser.Geom.Point(width / 2, height / 2);
-		this.add.image(width / 2, height / 2, 'background');
+		//this.add.tileSprite(width / 2, height / 2,800,600, 'background');
+	   for (x = 0; x < 20; x++)
+	    {
+	        for (var y = 0; y < 20; y++) {
+	        	this.add.image(760 * x, 600 * y, 'background').setOrigin(0);
+	        }
+	    }
 		player = this.physics.add.sprite(width / 2, height / 2, 'player');
 		player.smoothed = false;
 		player.setScale(.1 + mass * .01);
 
 
 		this.input.on('pointermove', move);
-		timer.scene.time.addEvent({delay: 500, loop: true, callback: addFood, args: [this] });
+		timer.scene.time.addEvent({delay: 100, loop: true, callback: addFood, args: [this] });
+
+		this.cameras.main.setBounds(0,0, width, height);
+		this.cameras.main.startFollow(player);
 	}
 
 
@@ -104,10 +113,10 @@
 	{
 		if(player.x != lastClick.x || player.x != lastClick.y)
 		{
-			move(lastClick);
+			//move(lastClick);
 		}
 		this.physics.collide(player, food, foodCollide, foodCollideProcess);
-
+		//this.cameras.main.centerOn(player.x, player.y);
 	}
 	</script>
 	</body>
