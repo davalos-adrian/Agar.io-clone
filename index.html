@@ -3,20 +3,24 @@
 	<head>
 		<title>Agar.io clone</title>
 		<script src="//cdn.jsdelivr.net/npm/phaser@3.22.0/dist/phaser.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.14.2/matter.min.js"></script>
+		<link href="https://fonts.googleapis.com/css?family=Roboto+Condensed&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css?family=Sriracha&display=swap" rel="stylesheet">
+		<style> *{font-family: 'Sriracha', cursive;}</style>
 	</head>
 	<body>
 	<script type="text/javascript">
-		
-		var config = {
+	var config = {
 	    type: Phaser.AUTO,
-	    width: window.screen.width,
-	    height: window.screen.height,
 	    physics: {
-            default: 'arcade',
-            arcade: {
+            default: 'matter',
+            matter: {
                 gravity: { y: 0 },
                 debug: false
             }
+        },
+        scale : {
+		    mode: Phaser.Scale.RESIZE
         },
 	    scene: {
 	        preload: preload,
@@ -25,6 +29,68 @@
 	    }
 	};
 
+	var game = new Phaser.Game(config);
+	var mass;
+	var player;
+	var timer;
+	var width;
+	var shapes;
+	var height;
+	var score;
+	var UICam;
+	var UIText1;
+	var container;
+	var food = [];
+
+
+
+	function clamp(num, min, max) {
+	  return num <= min ? min : num >= max ? max : num;
+	}
+
+	function move(pointer)
+	{
+		var angle = Math.atan2(pointer.worldY - player.y, pointer.worldX - player.x);
+		var speed = clamp(Math.log(1000) / Math.log(mass) + .1, .1, 8);
+		player.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
+	}
+
+	function foodCollideProcess(playerGO, foodGO)
+	{
+		mass += .5;
+		game.scene.scenes[0].tweens.add({
+	        targets: playerGO.gameObject,
+	        scaleX: .1 + mass * .01,
+	        scaleY: .1 + mass * .01,
+	        duration: 150,
+	        ease: 'Power2',
+	        completeDelay: 150
+	    });
+	    score++;
+	    UIText1.setText("Puntos: " + score);
+        foodGO.gameObject.setVisible(false);
+        game.scene.scenes[0].matter.world.remove(foodGO);
+        for(var i = 0; i < food.length; i++)
+        {
+        	if(foodGO.parent.id == food[i].body.id)
+        	{
+        		food.splice(i, 1);
+        	}
+        }
+		return false;
+	}
+
+	function foodCollide(playerGO, foodGO)
+	{
+		
+	}
+
+	function addFood(scene)
+	{
+		var foodx = scene.matter.add.sprite(Math.random() * width, Math.random() * height, "food" + Math.floor(Math.random() * 4 + 1), null, {shape: shapes.food1});
+		foodx.setCollisionGroup(-1);
+		food.push(foodx);
+	}
 
 	function preload ()
 	{
@@ -34,89 +100,62 @@
 	    this.load.image('food2', 'assets/food2.png');
 	    this.load.image('food3', 'assets/food3.png');
 	    this.load.image('food4', 'assets/food4.png');
-	}
-
-	var game = new Phaser.Game(config);
-	var lastClick;
-	var mass;
-	var maxSpeed;
-	var cursor;
-	var player;
-	var score;
-	var timer;
-	var width;
-	var height;
-	var food = [];
-
-
-	function clamp(num, min, max) {
-	  return num <= min ? min : num >= max ? max : num;
-	}
-
-	function move(pointer)
-	{
-		//var velocityX = clamp(, -maxSpeed, maxSpeed);
-		//var velocityY = clamp(, -maxSpeed, maxSpeed);
-		player.setVelocityX((pointer.worldX - player.x) * 3 / (mass * .1));
-		player.setVelocityY((pointer.worldY - player.y) * 3 / (mass * .1));
-		lastClick.x = pointer.worldX;
-		lastClick.y = pointer.worldY;
-	}
-	function foodCollideProcess(playerGO, foodGO)
-	{
-		mass++;
-		player.setScale(.1 + mass * .005);
-		foodGO.destroy();
-		return true;
-	}
-
-	function foodCollide(playerGO, foodGO)
-	{
-
-	}
-
-	function addFood(scene)
-	{
-		food.push(scene.physics.add.sprite(Math.random() * width, Math.random() * height, "food" + Math.floor(Math.random() * 4 + 1)));
+	    this.load.json('shapes', 'assets/assets-shapes.json');
 	}
 
 	function create ()
 	{
+		/*Inicializacion de mapa y variables*/
 		width = 10000;
 		height = 10000;
-		mass = 1;
-		maxSpeed = 300;
+		mass = 900;
 		score = 0;
 		timer = new Phaser.Time.Clock(this);
-		lastClick = new Phaser.Geom.Point(width / 2, height / 2);
-		//this.add.tileSprite(width / 2, height / 2,800,600, 'background');
-	   for (x = 0; x < 20; x++)
+		UIText1 = this.add.text(0, 32, '0', {color : "black", fontSize: "40px", fontFamily: '"Sriracha"'});
+		shapes = this.cache.json.get('shapes');
+		cont = this.add.container();
+		cont.add([UIText1]);
+		UICam = this.cameras.add(0, 0);
+	   	for (x = 0; x < 25; x++)
 	    {
-	        for (var y = 0; y < 20; y++) {
-	        	this.add.image(760 * x, 600 * y, 'background').setOrigin(0);
+	        for (var y = 0; y < 25; y++) {
+	        	UICam.ignore(this.add.image(760 * x, 600 * y, 'background').setOrigin(0));
 	        }
 	    }
-		player = this.physics.add.sprite(width / 2, height / 2, 'player');
+		player = this.matter.add.sprite(width / 2, height / 2, 'player',null, {shape : shapes.player});
 		player.smoothed = false;
 		player.setScale(.1 + mass * .01);
+		player.body.friction = 0;
+		player.body.frictionStatic = 0;
+		player.body.frictionAir = 0;
+		player.setCollisionGroup(-1);
+		player.setCollisionCategory(2);
+		player.setCollidesWith(2);
 
-
+		/*Hacer que las camaras rendericen sus propios objetos*/
+	    this.cameras.main.ignore(cont);
+	    UICam.ignore(player);
+    	//  The new UI Camera will not render the background image
+    	
+    	UIText1.setText("Puntos: " + score);
+		/*Evento para escuchar al mouse*/
 		this.input.on('pointermove', move);
+
+		/*Evento para spawnear comida*/
 		timer.scene.time.addEvent({delay: 100, loop: true, callback: addFood, args: [this] });
 
+		/*Decirle los limites del mapa a la camara */
 		this.cameras.main.setBounds(0,0, width, height);
 		this.cameras.main.startFollow(player);
+		this.matter.world.setBounds(0, 0, width, height);
 	}
 
 
 	function update ()
 	{
-		if(player.x != lastClick.x || player.x != lastClick.y)
-		{
-			//move(lastClick);
-		}
-		this.physics.collide(player, food, foodCollide, foodCollideProcess);
-		//this.cameras.main.centerOn(player.x, player.y);
+		this.matter.overlap(player, food, foodCollide, foodCollideProcess);
+		this.cameras.main.setZoom(clamp(1 - mass *.002, 0.2, 1));
+		UICam.ignore(food);
 	}
 	</script>
 	</body>
